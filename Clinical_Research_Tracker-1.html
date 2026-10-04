@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111111">
+<title>My Clinical Research Tracker</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f5f5;color:#171717}
+.app{max-width:720px;margin:auto;padding:18px 14px 40px}
+header{background:#111;color:#fff;border-radius:22px;padding:22px 18px;margin-bottom:16px}
+h1{font-size:25px;margin:0 0 5px}.sub{opacity:.75;font-size:14px}
+.progress{height:10px;background:#ddd;border-radius:99px;overflow:hidden;margin-top:16px}.bar{height:100%;width:0;background:#fff;transition:.2s}
+.stats{display:flex;justify-content:space-between;margin-top:9px;font-size:13px;opacity:.8}
+.stage{background:#fff;border-radius:18px;padding:15px;margin:12px 0;box-shadow:0 1px 5px #0000000d}
+.stage h2{font-size:17px;margin:0 0 3px}.desc{font-size:13px;color:#777;margin-bottom:10px}
+.item{border-top:1px solid #eee;padding:12px 0}.item:first-of-type{border-top:0}
+.course{font-weight:650;font-size:15px;line-height:1.35}
+.learned{font-size:12px;color:#777;margin-top:4px}
+.statuses{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+button{border:1px solid #ddd;background:#fafafa;border-radius:999px;padding:7px 10px;font-size:12px;cursor:pointer}
+button.active{background:#111;color:#fff;border-color:#111}
+.complete{font-size:14px}
+.controls{display:flex;gap:8px;margin:15px 0}.controls button{border-radius:12px}
+.note{width:100%;min-height:90px;border:1px solid #ddd;border-radius:14px;padding:12px;font:inherit;background:#fff;resize:vertical}
+.small{font-size:12px;color:#777}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+<h1>My Clinical Research Tracker</h1>
+<div class="sub">Track your journey — not another textbook.</div>
+<div class="progress"><div class="bar" id="bar"></div></div>
+<div class="stats"><span id="progressText">0% complete</span><span id="count">0 / 10 completed</span></div>
+</header>
+
+<div id="list"></div>
+
+<div class="stage">
+<h2>📝 My Research Journal</h2>
+<p class="small">Keep only what matters. Your note saves automatically on this device.</p>
+<textarea id="journal" class="note" placeholder="Milestones, research ideas, questions..."></textarea>
+</div>
+
+<div class="controls">
+<button id="reset">Reset all statuses</button>
+</div>
+<p class="small">Your progress is stored locally in this browser. If you clear browser data or switch browsers/devices, it may be lost.</p>
+</div>
+
+<script>
+const stages=[
+["1. Research Foundations","Understand what clinical research is and how it works.",
+["Understanding Clinical Research: Behind the Statistics","Research basics, study types, basic statistics"]],
+["2. Research Methodology & Study Design","Learn how to formulate research questions and choose study designs.",
+["Understanding Research Methods","Research questions, literature review, research design"]],
+["3. Critical Appraisal","Learn how to read and judge medical research.",
+["Understanding Medical Research: Your Facebook Friend Is Wrong","How to read and critique medical papers"]],
+["4. Epidemiology","Apply epidemiological thinking to clinical questions.",
+["Clinical Epidemiology","Diagnosis, prognosis, treatment and causes"]],
+["5. Biostatistics","Learn the statistics needed to analyze medical data.",
+["Biostatistics in Public Health","Descriptive statistics, inference, regression and interpretation"]],
+["6. Clinical Trials","Learn how clinical trials are designed and conducted.",
+["Design and Conduct of Clinical Trials","Randomization, masking, bias, outcomes and trial design"]],
+["7. Systematic Reviews & Meta-analysis","Learn how to synthesize existing research.",
+["Introduction to Systematic Review and Meta-Analysis","PICO, searching, extraction, risk of bias and meta-analysis"]],
+["8. Research Practice","Turn your knowledge into actual research experience.",
+["Choose a research question","Turn a clinical problem into a researchable question"],
+["Conduct my first research project","Apply methodology, data collection and analysis"],
+["Write and submit a research paper","Write, revise and submit your work"]]
+];
+
+const key="clinicalResearchTrackerV1";
+let state=JSON.parse(localStorage.getItem(key)||'{}');
+
+function save(){localStorage.setItem(key,JSON.stringify(state));render()}
+function setStatus(i,s){state[i]=s;save()}
+
+function render(){
+ const list=document.getElementById("list"); list.innerHTML="";
+ let total=0,done=0;
+ stages.forEach((stage,si)=>{
+   const box=document.createElement("section");box.className="stage";
+   box.innerHTML=`<h2>${stage[0]}</h2><div class="desc">${stage[1]}</div>`;
+   stage.slice(2).forEach((item,ii)=>{
+     const id=si+"-"+ii, status=state[id]||"not";
+     total++;if(status==="done")done++;
+     const row=document.createElement("div");row.className="item";
+     row.innerHTML=`<div class="course">${item[0]}</div><div class="learned">${item[1]}</div>
+     <div class="statuses">
+       <button data-s="${id}" data-v="not" class="${status==="not"?"active":""}">○ Not started</button>
+       <button data-s="${id}" data-v="progress" class="${status==="progress"?"active":""}">◐ In progress</button>
+       <button data-s="${id}" data-v="done" class="${status==="done"?"active":""}">✓ Completed</button>
+     </div>`;
+     box.appendChild(row);
+   });
+   list.appendChild(box);
+ });
+ document.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>setStatus(b.dataset.s,b.dataset.v));
+ const pct=total?Math.round(done/total*100):0;
+ document.getElementById("bar").style.width=pct+"%";
+ document.getElementById("progressText").textContent=pct+"% complete";
+ document.getElementById("count").textContent=done+" / "+total+" completed";
+}
+document.getElementById("reset").onclick=()=>{if(confirm("Reset all research statuses?")){state={};save()}};
+const journal=document.getElementById("journal");
+journal.value=localStorage.getItem("clinicalResearchJournal")||"";
+journal.oninput=()=>localStorage.setItem("clinicalResearchJournal",journal.value);
+render();
+</script>
+</body>
+</html>
